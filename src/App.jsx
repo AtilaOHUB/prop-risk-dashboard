@@ -294,8 +294,9 @@ export default function App() {
   const [useLiveAsEntry, setUseLiveAsEntry] = useState(false);
 
   const preset = PROP_PRESETS[presetKey];
+    const instrument = getInstrument(cfdKey);
 
-  const selectedCfd =
+    const selectedCfd =
     cfdKey === "CUSTOM"
       ? {
           key: "CUSTOM",
@@ -304,7 +305,10 @@ export default function App() {
           defaultPrice: Number(entry) || 0,
           group: "Custom CFD",
         }
-      : getCfdByKey(cfdKey);
+      : {
+          ...getCfdByKey(cfdKey),
+          valuePerPoint: instrument.valuePerPoint,
+        };
 
   const effectiveEntry = useLiveAsEntry && livePrice !== "" ? Number(livePrice) : Number(entry);
 
