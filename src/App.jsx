@@ -277,6 +277,8 @@ export default function App() {
   const [riskPercent, setRiskPercent] = useState(1);
   const [phase, setPhase] = useState("phase1");
   const [leverage, setLeverage] = useState(10);
+  const [livePrice, setLivePrice] = useState("");
+  const [useLiveAsEntry, setUseLiveAsEntry] = useState(false);
 
   const preset = PROP_PRESETS[presetKey];
 
@@ -290,6 +292,8 @@ export default function App() {
           group: "Custom CFD",
         }
       : getCfdByKey(cfdKey);
+
+  const effectiveEntry = useLiveAsEntry && livePrice !== "" ? Number(livePrice) : Number(entry);
 
   const accountSize = preset.accountSize;
   const dailyLossValue =
@@ -307,7 +311,7 @@ export default function App() {
   const profitTargetValue = accountSize * (targetPct / 100);
 
   const metrics = useMemo(() => {
-    const e = Number(entry);
+    const e = Number(effectiveEntry);
     const t = Number(tp);
     const s = Number(sl);
     const l = Number(lots);
@@ -361,7 +365,7 @@ export default function App() {
       leftToTarget: Math.max(0, profitTargetValue - Math.max(0, profitTp)),
     };
   }, [
-    entry,
+    effectiveEntry,
     tp,
     sl,
     lots,
@@ -400,9 +404,12 @@ export default function App() {
     setSl(basePrice);
     setLots(0.5);
     setRiskPercent(1);
+    setLivePrice("");
+    setUseLiveAsEntry(false);
   };
 
   const layoutGrid = typeof window !== "undefined" && window.innerWidth < 980;
+  const stickyMobile = typeof window !== "undefined" && window.innerWidth < 760;
 
   return (
     <div
@@ -410,7 +417,7 @@ export default function App() {
         minHeight: "100vh",
         background: "linear-gradient(180deg, #050505 0%, #121212 100%)",
         color: COLORS.text,
-        padding: 20,
+        padding: stickyMobile ? "16px 16px 92px" : 20,
         fontFamily:
           "Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, sans-serif",
       }}
@@ -680,7 +687,7 @@ export default function App() {
             <div
               style={{
                 display: "grid",
-                gridTemplateColumns: layoutGrid ? "1fr" : "repeat(3, minmax(0,1fr))",
+                gridTemplateColumns: layoutGrid ? "1fr" : "repeat(4, minmax(0,1fr))",
                 gap: 12,
                 marginBottom: 12,
               }}
@@ -690,6 +697,17 @@ export default function App() {
                 <input style={inputStyle()} type="number" step="0.0001" value={entry} onChange={(e) => setEntry(e.target.value)} />
               </div>
               <div>
+                <label style={labelStyle()}>Live Price</label>
+                <input
+                  style={inputStyle()}
+                  type="number"
+                  step="0.0001"
+                  value={livePrice}
+                  onChange={(e) => setLivePrice(e.target.value)}
+                  placeholder="API-ready field"
+                />
+              </div>
+              <div>
                 <label style={labelStyle()}>Take Profit</label>
                 <input style={inputStyle()} type="number" step="0.0001" value={tp} onChange={(e) => setTp(e.target.value)} />
               </div>
@@ -697,6 +715,17 @@ export default function App() {
                 <label style={labelStyle()}>Stop Loss</label>
                 <input style={inputStyle()} type="number" step="0.0001" value={sl} onChange={(e) => setSl(e.target.value)} />
               </div>
+            </div>
+
+            <div style={{ marginBottom: 14 }}>
+              <label style={{ display: "flex", alignItems: "center", gap: 10, fontSize: 13, color: COLORS.textSoft }}>
+                <input
+                  type="checkbox"
+                  checked={useLiveAsEntry}
+                  onChange={(e) => setUseLiveAsEntry(e.target.checked)}
+                />
+                Use live price as effective entry
+              </label>
             </div>
 
             <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
@@ -859,7 +888,7 @@ export default function App() {
           )}
         </div>
 
-        <div style={cardStyle({ padding: 16 })}>
+        <div style={cardStyle({ padding: 16, marginBottom: stickyMobile ? 12 : 0 })}>
           <div style={{ fontWeight: 900, marginBottom: 12, fontSize: 18 }}>Current CFD & Rules Summary</div>
 
           <div
@@ -889,6 +918,30 @@ export default function App() {
           </div>
         </div>
       </div>
+
+      {stickyMobile && (
+        <div
+          style={{
+            position: "fixed",
+            left: 0,
+            right: 0,
+            bottom: 0,
+            padding: 12,
+            background: "rgba(5,5,5,0.96)",
+            borderTop: `1px solid ${COLORS.border}`,
+            backdropFilter: "blur(10px)",
+          }}
+        >
+          <div style={{ maxWidth: 1280, margin: "0 auto", display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+            <button style={buttonStyle(true)} onClick={applySuggestedLots}>
+              Apply Lots
+            </button>
+            <button style={buttonStyle(false)} onClick={resetTrade}>
+              Reset
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
