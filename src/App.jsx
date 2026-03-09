@@ -1,6 +1,23 @@
 import { useMemo, useState } from "react";
 import brandImage from "./assets/brand.jpg";
 
+const COLORS = {
+  bgTop: "#050505",
+  bgBottom: "#121212",
+  card: "rgba(24, 24, 24, 0.95)",
+  panel: "#111111",
+  border: "#2A2A2A",
+  text: "#F8FAFC",
+  textSoft: "#9CA3AF",
+  textMuted: "#6B7280",
+  gold: "#F59E0B",
+  goldSoft: "#FBBF24",
+  green: "#22C55E",
+  red: "#EF4444",
+  blue: "#38BDF8",
+  purple: "#A78BFA",
+};
+
 const CFD_LIBRARY = {
   forex: {
     label: "Forex CFDs",
@@ -156,11 +173,21 @@ function fmtPct(n) {
 
 function cardStyle(extra = {}) {
   return {
-    background: "rgba(24, 24, 24, 0.95)",
-    border: "1px solid #2A2A2A",
-    borderRadius: 22,
-    padding: 18,
+    background: COLORS.card,
+    border: `1px solid ${COLORS.border}`,
+    borderRadius: 24,
+    padding: 20,
     boxShadow: "0 12px 40px rgba(0,0,0,0.35)",
+    ...extra,
+  };
+}
+
+function panelStyle(extra = {}) {
+  return {
+    background: COLORS.panel,
+    border: `1px solid ${COLORS.border}`,
+    borderRadius: 18,
+    padding: 14,
     ...extra,
   };
 }
@@ -170,7 +197,7 @@ function labelStyle() {
     display: "block",
     fontSize: 12,
     fontWeight: 700,
-    color: "#9CA3AF",
+    color: COLORS.textSoft,
     marginBottom: 6,
     letterSpacing: 0.3,
   };
@@ -179,13 +206,15 @@ function labelStyle() {
 function inputStyle() {
   return {
     width: "100%",
+    minHeight: 46,
     padding: "12px 14px",
     borderRadius: 14,
-    border: "1px solid #2A2A2A",
-    background: "#111111",
+    border: `1px solid ${COLORS.border}`,
+    background: COLORS.panel,
     color: "#F5F5F5",
     fontSize: 14,
     boxSizing: "border-box",
+    outline: "none",
   };
 }
 
@@ -194,19 +223,21 @@ function buttonStyle(primary = true) {
     ? {
         border: "none",
         borderRadius: 14,
+        minHeight: 46,
         padding: "12px 16px",
-        fontWeight: 700,
+        fontWeight: 800,
         cursor: "pointer",
         background: "linear-gradient(135deg, #F59E0B, #FBBF24)",
         color: "#111111",
       }
     : {
-        border: "1px solid #2A2A2A",
+        border: `1px solid ${COLORS.border}`,
         borderRadius: 14,
+        minHeight: 46,
         padding: "12px 16px",
         fontWeight: 700,
         cursor: "pointer",
-        background: "#111111",
+        background: COLORS.panel,
         color: "#F5F5F5",
       };
 }
@@ -214,9 +245,20 @@ function buttonStyle(primary = true) {
 function Stat({ title, value, subtitle, color }) {
   return (
     <div style={cardStyle({ padding: 16 })}>
-      <div style={{ fontSize: 12, color: "#6B7280", marginBottom: 8 }}>{title}</div>
-      <div style={{ fontSize: 28, fontWeight: 800, color: color || "#F8FAFC" }}>{value}</div>
-      <div style={{ fontSize: 12, color: "#6B7280", marginTop: 6 }}>{subtitle}</div>
+      <div style={{ fontSize: 12, color: COLORS.textMuted, marginBottom: 10, fontWeight: 700 }}>
+        {title}
+      </div>
+      <div
+        style={{
+          fontSize: 30,
+          fontWeight: 900,
+          color: color || COLORS.text,
+          lineHeight: 1.1,
+        }}
+      >
+        {value}
+      </div>
+      <div style={{ fontSize: 12, color: COLORS.textMuted, marginTop: 6 }}>{subtitle}</div>
     </div>
   );
 }
@@ -367,19 +409,27 @@ export default function App() {
       style={{
         minHeight: "100vh",
         background: "linear-gradient(180deg, #050505 0%, #121212 100%)",
-        color: "#F8FAFC",
+        color: COLORS.text,
         padding: 20,
         fontFamily:
           "Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, sans-serif",
       }}
     >
       <div style={{ maxWidth: 1280, margin: "0 auto" }}>
-        <div style={{ ...cardStyle({ padding: 14, marginBottom: 18, overflow: "hidden" }) }}>
+        <div
+          style={cardStyle({
+            padding: layoutGrid ? 18 : 22,
+            marginBottom: 20,
+            overflow: "hidden",
+            background:
+              "radial-gradient(circle at top right, rgba(245,158,11,0.10), transparent 30%), rgba(24,24,24,0.95)",
+          })}
+        >
           <div
             style={{
               display: "grid",
-              gridTemplateColumns: layoutGrid ? "1fr" : "130px 1fr",
-              gap: 16,
+              gridTemplateColumns: layoutGrid ? "1fr" : "150px 1fr",
+              gap: 18,
               alignItems: "center",
             }}
           >
@@ -387,34 +437,44 @@ export default function App() {
               src={brandImage}
               alt="PropEdge brand"
               style={{
-                width: layoutGrid ? 110 : "100%",
+                width: layoutGrid ? 120 : "100%",
                 aspectRatio: "1 / 1",
                 objectFit: "cover",
-                borderRadius: 18,
+                borderRadius: 22,
                 border: "2px solid rgba(245,158,11,0.45)",
-                boxShadow: "0 0 25px rgba(245,158,11,0.25)",
+                boxShadow: "0 0 30px rgba(245,158,11,0.25)",
                 justifySelf: layoutGrid ? "center" : "stretch",
               }}
             />
-            <div>
+
+            <div style={{ textAlign: layoutGrid ? "center" : "left" }}>
               <div
                 style={{
                   display: "flex",
                   flexWrap: "wrap",
                   gap: 10,
                   alignItems: "center",
-                  marginBottom: 10,
                   justifyContent: layoutGrid ? "center" : "flex-start",
-                  textAlign: layoutGrid ? "center" : "left",
+                  marginBottom: 10,
                 }}
               >
-                <span style={{ fontSize: 34, fontWeight: 900, letterSpacing: -1 }}>PropEdge</span>
                 <span
                   style={{
-                    padding: "6px 10px",
+                    fontSize: layoutGrid ? 30 : 38,
+                    fontWeight: 900,
+                    letterSpacing: -1.2,
+                    color: COLORS.text,
+                  }}
+                >
+                  PropEdge
+                </span>
+
+                <span
+                  style={{
+                    padding: "7px 12px",
                     borderRadius: 999,
-                    background: "rgba(245,158,11,0.14)",
-                    color: "#F59E0B",
+                    background: "rgba(245,158,11,0.10)",
+                    color: COLORS.gold,
                     fontSize: 12,
                     fontWeight: 800,
                     border: "1px solid rgba(245,158,11,0.18)",
@@ -423,18 +483,48 @@ export default function App() {
                   CFD Risk Engine
                 </span>
               </div>
+
               <p
                 style={{
                   margin: 0,
-                  color: "#9CA3AF",
-                  fontSize: 15,
-                  lineHeight: 1.5,
-                  textAlign: layoutGrid ? "center" : "left",
+                  color: COLORS.textSoft,
+                  fontSize: layoutGrid ? 14 : 15,
+                  lineHeight: 1.6,
+                  maxWidth: 760,
+                  marginInline: layoutGrid ? "auto" : 0,
                 }}
               >
-                Universal CFD calculator for prop traders and own-capital traders. Built for risk,
-                target tracking, leverage awareness and rule protection.
+                Universal CFD calculator for prop traders and own-capital traders.
+                Built for precise risk control, target tracking, leverage awareness and
+                rule protection across multiple funded programs.
               </p>
+
+              <div
+                style={{
+                  display: "flex",
+                  flexWrap: "wrap",
+                  gap: 8,
+                  marginTop: 14,
+                  justifyContent: layoutGrid ? "center" : "flex-start",
+                }}
+              >
+                {["Prop Rules", "CFD Calculator", "Own Capital Mode", "Mobile Ready"].map((item) => (
+                  <span
+                    key={item}
+                    style={{
+                      padding: "6px 10px",
+                      borderRadius: 999,
+                      background: "#111111",
+                      border: `1px solid ${COLORS.border}`,
+                      fontSize: 12,
+                      color: COLORS.textSoft,
+                      fontWeight: 700,
+                    }}
+                  >
+                    {item}
+                  </span>
+                ))}
+              </div>
             </div>
           </div>
         </div>
@@ -458,15 +548,21 @@ export default function App() {
                 flexWrap: "wrap",
               }}
             >
-              <h2 style={{ margin: 0, fontSize: 22 }}>Trade Setup</h2>
+              <div>
+                <div style={{ fontSize: 20, fontWeight: 800, color: COLORS.text }}>Trade Setup</div>
+                <div style={{ fontSize: 13, color: COLORS.textMuted, marginTop: 4 }}>
+                  Select CFD, direction, entry, target and stop.
+                </div>
+              </div>
+
               <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
                 <button
                   onClick={() => setMode("prop")}
                   style={{
                     ...buttonStyle(false),
                     background: mode === "prop" ? "#1A1A1A" : "#111111",
-                    borderColor: mode === "prop" ? "#F59E0B" : "#2A2A2A",
-                    color: mode === "prop" ? "#F59E0B" : "#F5F5F5",
+                    borderColor: mode === "prop" ? COLORS.gold : COLORS.border,
+                    color: mode === "prop" ? COLORS.gold : "#F5F5F5",
                   }}
                 >
                   Prop Mode
@@ -476,8 +572,8 @@ export default function App() {
                   style={{
                     ...buttonStyle(false),
                     background: mode === "own" ? "#1A1A1A" : "#111111",
-                    borderColor: mode === "own" ? "#F59E0B" : "#2A2A2A",
-                    color: mode === "own" ? "#F59E0B" : "#F5F5F5",
+                    borderColor: mode === "own" ? COLORS.gold : COLORS.border,
+                    color: mode === "own" ? COLORS.gold : "#F5F5F5",
                   }}
                 >
                   Own Capital Mode
@@ -614,7 +710,12 @@ export default function App() {
           </div>
 
           <div style={cardStyle()}>
-            <h2 style={{ marginTop: 0, fontSize: 22 }}>Account Rules</h2>
+            <div style={{ marginBottom: 16 }}>
+              <div style={{ fontSize: 20, fontWeight: 800, color: COLORS.text }}>Account Rules</div>
+              <div style={{ fontSize: 13, color: COLORS.textMuted, marginTop: 4 }}>
+                Choose preset, rule type and account logic.
+              </div>
+            </div>
 
             <div style={{ display: "grid", gap: 12 }}>
               <div>
@@ -644,10 +745,10 @@ export default function App() {
                 </div>
               )}
 
-              <div style={{ background: "#111111", borderRadius: 16, padding: 14, border: "1px solid #2A2A2A" }}>
-                <div style={{ fontSize: 13, color: "#6B7280" }}>Company / Program</div>
+              <div style={panelStyle()}>
+                <div style={{ fontSize: 13, color: COLORS.textMuted }}>Company / Program</div>
                 <div style={{ fontSize: 20, fontWeight: 800, marginTop: 4 }}>{preset.company}</div>
-                <div style={{ fontSize: 14, color: "#9CA3AF", marginTop: 4 }}>{preset.program}</div>
+                <div style={{ fontSize: 14, color: COLORS.textSoft, marginTop: 4 }}>{preset.program}</div>
               </div>
 
               <div
@@ -657,12 +758,12 @@ export default function App() {
                   gap: 12,
                 }}
               >
-                <div style={{ background: "#111111", borderRadius: 16, padding: 14, border: "1px solid #2A2A2A" }}>
-                  <div style={{ fontSize: 12, color: "#6B7280" }}>Account Size</div>
+                <div style={panelStyle()}>
+                  <div style={{ fontSize: 12, color: COLORS.textMuted }}>Account Size</div>
                   <div style={{ fontSize: 20, fontWeight: 800, marginTop: 4 }}>{fmtUsd(accountSize)}</div>
                 </div>
-                <div style={{ background: "#111111", borderRadius: 16, padding: 14, border: "1px solid #2A2A2A" }}>
-                  <div style={{ fontSize: 12, color: "#6B7280" }}>Rule Type</div>
+                <div style={panelStyle()}>
+                  <div style={{ fontSize: 12, color: COLORS.textMuted }}>Rule Type</div>
                   <div style={{ fontSize: 16, fontWeight: 800, marginTop: 6 }}>{preset.ruleType}</div>
                 </div>
               </div>
@@ -686,12 +787,14 @@ export default function App() {
         {warnings.length > 0 && (
           <div
             style={cardStyle({
-              marginBottom: 18,
+              marginBottom: 20,
               border: "1px solid rgba(245,158,11,0.25)",
-              background: "rgba(60,40,0,0.22)",
+              background: "linear-gradient(180deg, rgba(60,40,0,0.18) 0%, rgba(24,24,24,0.95) 100%)",
             })}
           >
-            <div style={{ fontWeight: 900, marginBottom: 8, color: "#F59E0B" }}>Protection Warnings</div>
+            <div style={{ fontWeight: 900, marginBottom: 10, color: COLORS.gold, fontSize: 16 }}>
+              Protection Warnings
+            </div>
             <div style={{ display: "grid", gap: 6 }}>
               {warnings.map((w, i) => (
                 <div key={i} style={{ color: "#FCD34D", fontSize: 14 }}>
@@ -710,10 +813,10 @@ export default function App() {
             marginBottom: 16,
           }}
         >
-          <Stat title="Profit at TP" value={fmtUsd(metrics.profitTp)} subtitle={`TP distance ${fmtNum(metrics.tpDistance, 4)}`} color="#22C55E" />
-          <Stat title="Loss at SL" value={fmtUsd(metrics.lossSl)} subtitle={`SL distance ${fmtNum(metrics.slDistance, 4)}`} color="#EF4444" />
-          <Stat title="Reward / Risk" value={`${fmtNum(metrics.rr, 2)}x`} subtitle={`Risk ${fmtPct(metrics.slPct)} of account`} color="#F8FAFC" />
-          <Stat title="Suggested Lots" value={fmtNum(metrics.suggestedLots, 2)} subtitle={`Target risk ${fmtUsd(metrics.riskAmountTarget)}`} color="#F59E0B" />
+          <Stat title="Profit at TP" value={fmtUsd(metrics.profitTp)} subtitle={`TP distance ${fmtNum(metrics.tpDistance, 4)}`} color={COLORS.green} />
+          <Stat title="Loss at SL" value={fmtUsd(metrics.lossSl)} subtitle={`SL distance ${fmtNum(metrics.slDistance, 4)}`} color={COLORS.red} />
+          <Stat title="Reward / Risk" value={`${fmtNum(metrics.rr, 2)}x`} subtitle={`Risk ${fmtPct(metrics.slPct)} of account`} color={COLORS.text} />
+          <Stat title="Suggested Lots" value={fmtNum(metrics.suggestedLots, 2)} subtitle={`Target risk ${fmtUsd(metrics.riskAmountTarget)}`} color={COLORS.gold} />
         </div>
 
         <div
@@ -732,26 +835,26 @@ export default function App() {
             title="Left to Daily Limit"
             value={mode === "own" ? "—" : fmtUsd(metrics.leftToDaily)}
             subtitle={mode === "own" ? "Not applicable in own capital mode" : `Daily cap ${fmtUsd(dailyLossValue)}`}
-            color="#38BDF8"
+            color={COLORS.blue}
           />
           <Stat
             title="Left to Max Loss"
             value={mode === "own" ? "—" : fmtUsd(metrics.leftToMax)}
             subtitle={mode === "own" ? "Not applicable in own capital mode" : `Max cap ${fmtUsd(maxLossValue)}`}
-            color="#A78BFA"
+            color={COLORS.purple}
           />
           <Stat
             title="Left to Target"
             value={profitTargetValue > 0 ? fmtUsd(metrics.leftToTarget) : "—"}
             subtitle={profitTargetValue > 0 ? `Target ${fmtUsd(profitTargetValue)}` : "No target in this mode"}
-            color="#F59E0B"
+            color={COLORS.gold}
           />
           {mode === "own" && (
             <Stat
               title="Margin Required"
               value={fmtUsd(metrics.marginRequired)}
               subtitle={`Notional ${fmtUsd(metrics.notional)}`}
-              color="#FBBF24"
+              color={COLORS.goldSoft}
             />
           )}
         </div>
@@ -766,20 +869,20 @@ export default function App() {
               gap: 12,
             }}
           >
-            <div style={{ background: "#111111", borderRadius: 16, padding: 14, border: "1px solid #2A2A2A" }}>
-              <div style={{ fontSize: 12, color: "#6B7280" }}>Selected CFD</div>
+            <div style={panelStyle()}>
+              <div style={{ fontSize: 12, color: COLORS.textMuted }}>Selected CFD</div>
               <div style={{ fontSize: 18, fontWeight: 800, marginTop: 6 }}>{selectedCfd?.label}</div>
-              <div style={{ fontSize: 13, color: "#9CA3AF", marginTop: 6 }}>
+              <div style={{ fontSize: 13, color: COLORS.textSoft, marginTop: 6 }}>
                 {selectedCfd?.group} · {fmtNum(selectedCfd?.valuePerPoint || 0, 2)} USD per 1.0 move / 1 lot
               </div>
             </div>
 
-            <div style={{ background: "#111111", borderRadius: 16, padding: 14, border: "1px solid #2A2A2A" }}>
-              <div style={{ fontSize: 12, color: "#6B7280" }}>Preset logic</div>
+            <div style={panelStyle()}>
+              <div style={{ fontSize: 12, color: COLORS.textMuted }}>Preset logic</div>
               <div style={{ fontSize: 18, fontWeight: 800, marginTop: 6 }}>
                 {preset.company} · {preset.program}
               </div>
-              <div style={{ fontSize: 13, color: "#9CA3AF", marginTop: 6 }}>
+              <div style={{ fontSize: 13, color: COLORS.textSoft, marginTop: 6 }}>
                 Daily {preset.dailyLossPct}% · Max {preset.maxLossPct}% · Target {targetPct}%
               </div>
             </div>
