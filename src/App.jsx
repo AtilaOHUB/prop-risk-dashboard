@@ -4,6 +4,7 @@ import { formatNumber } from "./core/formatting/formatNumber";
 import { formatPrice } from "./core/formatting/formatPrice";
 import { formatCurrency } from "./core/formatting/formatCurrency";
 import { calculateTradeMetrics } from "./core/risk/calculateTradeMetrics";
+import { getRiskWarnings } from "./core/risk/getRiskWarnings";
 
 const COLORS = {
   bgTop: "#050505",
@@ -384,17 +385,13 @@ export default function App() {
   profitTargetValue,
 ]);
 
-  const warnings = [];
-  if (mode === "prop" && preset.ruleType !== "own_capital") {
-    if (metrics.riskAbs > dailyLossValue) warnings.push("Trade would exceed the allowed daily loss.");
-    if (metrics.riskAbs > maxLossValue) warnings.push("Trade would exceed the maximum account loss.");
-    if (preset.ruleType === "eod_trailing") warnings.push("FTMO 1-Step uses end-of-day trailing logic. Do not treat it like a static drawdown model.");
-    if (preset.ruleType === "trailing" || preset.ruleType === "trailing_live") warnings.push("This preset uses trailing drawdown logic. Static calculations can be misleading.");
-    if (preset.ruleType === "equity_drawdown") warnings.push("TegasFX instant funding uses firm-specific equity drawdown logic. Confirm details before trading.");
-  }
-  if (mode === "own") {
-    warnings.push("Own Capital Mode focuses on notional, leverage and margin. Prop-rule protection is disabled.");
-  }
+    const warnings = getRiskWarnings({
+    mode,
+    ruleType: preset.ruleType,
+    riskAbs: metrics.riskAbs,
+    dailyLossValue,
+    maxLossValue,
+  });
 
   const applySuggestedLots = () => {
     if (metrics.suggestedLots > 0) {
