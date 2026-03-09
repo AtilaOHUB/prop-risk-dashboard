@@ -1,12 +1,14 @@
 import { useMemo, useState } from "react";
-import brandImage from "./assets/brand.jpg";
+import brandLogo from "./assets/capulet-edge-logo.png";
 
 const COLORS = {
   bgTop: "#050505",
   bgBottom: "#121212",
   card: "rgba(24, 24, 24, 0.95)",
   panel: "#111111",
+  panelSoft: "#0D0D0D",
   border: "#2A2A2A",
+  borderGold: "rgba(245,158,11,0.22)",
   text: "#F8FAFC",
   textSoft: "#9CA3AF",
   textMuted: "#6B7280",
@@ -229,6 +231,7 @@ function buttonStyle(primary = true) {
         cursor: "pointer",
         background: "linear-gradient(135deg, #F59E0B, #FBBF24)",
         color: "#111111",
+        boxShadow: "0 10px 24px rgba(245,158,11,0.22)",
       }
     : {
         border: `1px solid ${COLORS.border}`,
@@ -415,7 +418,8 @@ export default function App() {
     <div
       style={{
         minHeight: "100vh",
-        background: "linear-gradient(180deg, #050505 0%, #121212 100%)",
+        background:
+          "radial-gradient(circle at top right, rgba(245,158,11,0.08), transparent 20%), linear-gradient(180deg, #050505 0%, #121212 100%)",
         color: COLORS.text,
         padding: stickyMobile ? "16px 16px 92px" : 20,
         fontFamily:
@@ -429,30 +433,43 @@ export default function App() {
             marginBottom: 20,
             overflow: "hidden",
             background:
-              "radial-gradient(circle at top right, rgba(245,158,11,0.10), transparent 30%), rgba(24,24,24,0.95)",
+              "radial-gradient(circle at top right, rgba(245,158,11,0.14), transparent 30%), rgba(24,24,24,0.95)",
+            border: `1px solid ${COLORS.borderGold}`,
           })}
         >
           <div
             style={{
               display: "grid",
-              gridTemplateColumns: layoutGrid ? "1fr" : "150px 1fr",
+              gridTemplateColumns: layoutGrid ? "1fr" : "170px 1fr",
               gap: 18,
               alignItems: "center",
             }}
           >
-            <img
-              src={brandImage}
-              alt="PropEdge brand"
-              style={{
-                width: layoutGrid ? 120 : "100%",
-                aspectRatio: "1 / 1",
-                objectFit: "cover",
-                borderRadius: 22,
-                border: "2px solid rgba(245,158,11,0.45)",
-                boxShadow: "0 0 30px rgba(245,158,11,0.25)",
-                justifySelf: layoutGrid ? "center" : "stretch",
-              }}
-            />
+            <div
+  style={{
+    width: layoutGrid ? 130 : "100%",
+    aspectRatio: "1 / 1",
+    justifySelf: layoutGrid ? "center" : "stretch",
+    borderRadius: 24,
+    background: "#050505",
+    border: "2px solid rgba(245,158,11,0.45)",
+    boxShadow: "0 0 30px rgba(245,158,11,0.22)",
+    overflow: "hidden",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+  }}
+>
+  <img
+    src={brandLogo}
+    alt="Capulet Edge logo"
+    style={{
+      width: "180%",
+      height: "180%",
+      objectFit: "contain",
+    }}
+  />
+</div>
 
             <div style={{ textAlign: layoutGrid ? "center" : "left" }}>
               <div
@@ -467,13 +484,13 @@ export default function App() {
               >
                 <span
                   style={{
-                    fontSize: layoutGrid ? 30 : 38,
+                    fontSize: layoutGrid ? 30 : 40,
                     fontWeight: 900,
                     letterSpacing: -1.2,
                     color: COLORS.text,
                   }}
                 >
-                  PropEdge
+                  Capulet Edge
                 </span>
 
                 <span
@@ -487,7 +504,7 @@ export default function App() {
                     border: "1px solid rgba(245,158,11,0.18)",
                   }}
                 >
-                  CFD Risk Engine
+                  Premium Risk Engine
                 </span>
               </div>
 
@@ -501,8 +518,8 @@ export default function App() {
                   marginInline: layoutGrid ? "auto" : 0,
                 }}
               >
-                Universal CFD calculator for prop traders and own-capital traders.
-                Built for precise risk control, target tracking, leverage awareness and
+                Precision-first CFD calculator for prop traders and own-capital traders.
+                Built for disciplined risk control, target tracking, leverage awareness and
                 rule protection across multiple funded programs.
               </p>
 
@@ -521,7 +538,7 @@ export default function App() {
                     style={{
                       padding: "6px 10px",
                       borderRadius: 999,
-                      background: "#111111",
+                      background: COLORS.panelSoft,
                       border: `1px solid ${COLORS.border}`,
                       fontSize: 12,
                       color: COLORS.textSoft,
