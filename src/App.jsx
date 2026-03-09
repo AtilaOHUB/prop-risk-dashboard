@@ -1,5 +1,8 @@
 import { useMemo, useState } from "react";
 import brandLogo from "./assets/capulet-edge-logo.png";
+import { formatNumber } from "./core/formatting/formatNumber";
+import { formatPrice } from "./core/formatting/formatPrice";
+import { formatCurrency } from "./core/formatting/formatCurrency";
 
 const COLORS = {
   bgTop: "#050505",
@@ -151,25 +154,62 @@ function getCfdByKey(key) {
   return allCfdItems.find((i) => i.key === key);
 }
 
-function fmtUsd(n) {
-  if (!isFinite(Number(n))) return "-";
-  return new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency: "USD",
-    maximumFractionDigits: 2,
-  }).format(Number(n));
+function getPricePrecisionForCfd(cfdKey) {
+  const precisionMap = {
+    EURUSD: 5,
+    GBPUSD: 5,
+    AUDUSD: 5,
+    NZDUSD: 5,
+    USDCAD: 5,
+    USDCHF: 5,
+    USDJPY: 3,
+    XAUUSD: 2,
+    XAGUSD: 3,
+    BTCUSD: 2,
+    ETHUSD: 2,
+    XRPUSD: 4,
+    SOLUSD: 2,
+    USOIL: 2,
+    UKOIL: 2,
+    NATGAS: 3,
+    US30: 1,
+    US100: 1,
+    SPX500: 1,
+    GER40: 1,
+    UK100: 1,
+    JP225: 1,
+    CUSTOM: 4,
+  };
+
+  return precisionMap[cfdKey] ?? 2;
 }
 
-function fmtNum(n, digits = 2) {
-  if (!isFinite(Number(n))) return "-";
-  return Number(n).toLocaleString("en-US", {
-    minimumFractionDigits: digits,
-    maximumFractionDigits: digits,
+function getPriceInstrument(cfdKey) {
+  return { pricePrecision: getPricePrecisionForCfd(cfdKey) };
+}
+
+function fmtUsd(n) {
+  return formatCurrency(n, {
+    currencySymbol: "$",
+    decimals: 2,
   });
 }
 
+function fmtNum(n, digits = 2) {
+  return formatNumber(n, {
+    decimals: digits,
+    minimumFractionDigits: digits,
+    maximumFractionDigits: digits,
+    useGrouping: true,
+  });
+}
+
+function fmtPrice(n, cfdKey) {
+  return formatPrice(n, getPriceInstrument(cfdKey));
+}
+
 function fmtPct(n) {
-  if (!isFinite(Number(n))) return "-";
+  if (!Number.isFinite(Number(n))) return "-";
   return `${Number(n).toFixed(2)}%`;
 }
 
@@ -446,30 +486,30 @@ export default function App() {
             }}
           >
             <div
-  style={{
-    width: layoutGrid ? 130 : "100%",
-    aspectRatio: "1 / 1",
-    justifySelf: layoutGrid ? "center" : "stretch",
-    borderRadius: 24,
-    background: "#050505",
-    border: "2px solid rgba(245,158,11,0.45)",
-    boxShadow: "0 0 30px rgba(245,158,11,0.22)",
-    overflow: "hidden",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-  }}
->
-  <img
-    src={brandLogo}
-    alt="Capulet Edge logo"
-    style={{
-      width: "180%",
-      height: "180%",
-      objectFit: "contain",
-    }}
-  />
-</div>
+              style={{
+                width: layoutGrid ? 130 : "100%",
+                aspectRatio: "1 / 1",
+                justifySelf: layoutGrid ? "center" : "stretch",
+                borderRadius: 24,
+                background: "#050505",
+                border: "2px solid rgba(245,158,11,0.45)",
+                boxShadow: "0 0 30px rgba(245,158,11,0.22)",
+                overflow: "hidden",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              <img
+                src={brandLogo}
+                alt="Capulet Edge logo"
+                style={{
+                  width: "180%",
+                  height: "180%",
+                  objectFit: "contain",
+                }}
+              />
+            </div>
 
             <div style={{ textAlign: layoutGrid ? "center" : "left" }}>
               <div
@@ -859,8 +899,8 @@ export default function App() {
             marginBottom: 16,
           }}
         >
-          <Stat title="Profit at TP" value={fmtUsd(metrics.profitTp)} subtitle={`TP distance ${fmtNum(metrics.tpDistance, 4)}`} color={COLORS.green} />
-          <Stat title="Loss at SL" value={fmtUsd(metrics.lossSl)} subtitle={`SL distance ${fmtNum(metrics.slDistance, 4)}`} color={COLORS.red} />
+          <Stat title="Profit at TP" value={fmtUsd(metrics.profitTp)} subtitle={`TP distance ${fmtPrice(metrics.tpDistance, cfdKey)}`} color={COLORS.green} />
+          <Stat title="Loss at SL" value={fmtUsd(metrics.lossSl)} subtitle={`SL distance ${fmtPrice(metrics.slDistance, cfdKey)}`} color={COLORS.red} />
           <Stat title="Reward / Risk" value={`${fmtNum(metrics.rr, 2)}x`} subtitle={`Risk ${fmtPct(metrics.slPct)} of account`} color={COLORS.text} />
           <Stat title="Suggested Lots" value={fmtNum(metrics.suggestedLots, 2)} subtitle={`Target risk ${fmtUsd(metrics.riskAmountTarget)}`} color={COLORS.gold} />
         </div>
