@@ -157,40 +157,6 @@ function getCfdByKey(key) {
   return allCfdItems.find((i) => i.key === key);
 }
 
-function getPricePrecisionForCfd(cfdKey) {
-  const precisionMap = {
-    EURUSD: 5,
-    GBPUSD: 5,
-    AUDUSD: 5,
-    NZDUSD: 5,
-    USDCAD: 5,
-    USDCHF: 5,
-    USDJPY: 3,
-    XAUUSD: 2,
-    XAGUSD: 3,
-    BTCUSD: 2,
-    ETHUSD: 2,
-    XRPUSD: 4,
-    SOLUSD: 2,
-    USOIL: 2,
-    UKOIL: 2,
-    NATGAS: 3,
-    US30: 1,
-    US100: 1,
-    SPX500: 1,
-    GER40: 1,
-    UK100: 1,
-    JP225: 1,
-    CUSTOM: 4,
-  };
-
-  return precisionMap[cfdKey] ?? 2;
-}
-
-function getPriceInstrument(cfdKey) {
-  return { pricePrecision: getPricePrecisionForCfd(cfdKey) };
-}
-
 function fmtUsd(n) {
   return formatCurrency(n, {
     currencySymbol: "$",
@@ -357,37 +323,37 @@ export default function App() {
       : preset.targetPct;
   const profitTargetValue = accountSize * (targetPct / 100);
 
- const metrics = useMemo(() => {
-  return calculateTradeMetrics({
+  const metrics = useMemo(() => {
+    return calculateTradeMetrics({
+      effectiveEntry,
+      tp,
+      sl,
+      lots,
+      valuePerPoint: selectedCfd?.valuePerPoint || 0,
+      accountSize,
+      riskPercent,
+      leverage,
+      direction,
+      dailyLossValue,
+      maxLossValue,
+      profitTargetValue,
+    });
+  }, [
     effectiveEntry,
     tp,
     sl,
     lots,
-    valuePerPoint: selectedCfd?.valuePerPoint || 0,
+    selectedCfd,
+    direction,
     accountSize,
     riskPercent,
     leverage,
-    direction,
     dailyLossValue,
     maxLossValue,
     profitTargetValue,
-  });
-}, [
-  effectiveEntry,
-  tp,
-  sl,
-  lots,
-  selectedCfd,
-  direction,
-  accountSize,
-  riskPercent,
-  leverage,
-  dailyLossValue,
-  maxLossValue,
-  profitTargetValue,
-]);
+  ]);
 
-    const warnings = getRiskWarnings({
+  const warnings = getRiskWarnings({
     mode,
     ruleType: preset.ruleType,
     riskAbs: metrics.riskAbs,
