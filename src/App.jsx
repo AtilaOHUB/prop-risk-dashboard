@@ -3,6 +3,7 @@ import brandLogo from "./assets/capulet-edge-logo.png";
 import { formatNumber } from "./core/formatting/formatNumber";
 import { formatPrice } from "./core/formatting/formatPrice";
 import { formatCurrency } from "./core/formatting/formatCurrency";
+import { calculateTradeMetrics } from "./core/risk/calculateTradeMetrics";
 
 const COLORS = {
   bgTop: "#050505",
@@ -353,74 +354,35 @@ export default function App() {
       : preset.targetPct;
   const profitTargetValue = accountSize * (targetPct / 100);
 
-  const metrics = useMemo(() => {
-    const e = Number(effectiveEntry);
-    const t = Number(tp);
-    const s = Number(sl);
-    const l = Number(lots);
-    const valuePerPoint = Number(selectedCfd?.valuePerPoint || 0);
-    const acc = Number(accountSize);
-    const riskPct = Number(riskPercent);
-    const lev = Number(leverage);
-
-    const tpDistance = Math.abs(t - e);
-    const slDistance = Math.abs(s - e);
-
-    let profitTp = 0;
-    let lossSl = 0;
-
-    if (direction === "Long") {
-      profitTp = (t - e) * valuePerPoint * l;
-      lossSl = (s - e) * valuePerPoint * l;
-    } else {
-      profitTp = (e - t) * valuePerPoint * l;
-      lossSl = (e - s) * valuePerPoint * l;
-    }
-
-    const riskAbs = Math.abs(lossSl);
-    const rewardAbs = Math.abs(profitTp);
-    const rr = riskAbs > 0 ? rewardAbs / riskAbs : 0;
-    const riskAmountTarget = acc * (riskPct / 100);
-    const suggestedLots =
-      slDistance > 0 && valuePerPoint > 0
-        ? riskAmountTarget / (slDistance * valuePerPoint)
-        : 0;
-
-    const notional = e * l * valuePerPoint;
-    const marginRequired = lev > 0 ? notional / lev : 0;
-
-    return {
-      tpDistance,
-      slDistance,
-      profitTp,
-      lossSl,
-      riskAbs,
-      rewardAbs,
-      rr,
-      riskAmountTarget,
-      suggestedLots,
-      notional,
-      marginRequired,
-      tpPct: acc > 0 ? (profitTp / acc) * 100 : 0,
-      slPct: acc > 0 ? (riskAbs / acc) * 100 : 0,
-      leftToDaily: Math.max(0, dailyLossValue - riskAbs),
-      leftToMax: Math.max(0, maxLossValue - riskAbs),
-      leftToTarget: Math.max(0, profitTargetValue - Math.max(0, profitTp)),
-    };
-  }, [
+ const metrics = useMemo(() => {
+  return calculateTradeMetrics({
     effectiveEntry,
     tp,
     sl,
     lots,
-    selectedCfd,
-    direction,
+    valuePerPoint: selectedCfd?.valuePerPoint || 0,
     accountSize,
     riskPercent,
     leverage,
+    direction,
     dailyLossValue,
     maxLossValue,
     profitTargetValue,
-  ]);
+  });
+}, [
+  effectiveEntry,
+  tp,
+  sl,
+  lots,
+  selectedCfd,
+  direction,
+  accountSize,
+  riskPercent,
+  leverage,
+  dailyLossValue,
+  maxLossValue,
+  profitTargetValue,
+]);
 
   const warnings = [];
   if (mode === "prop" && preset.ruleType !== "own_capital") {
