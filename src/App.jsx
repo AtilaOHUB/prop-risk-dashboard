@@ -5,6 +5,7 @@ import { formatPrice } from "./core/formatting/formatPrice";
 import { formatCurrency } from "./core/formatting/formatCurrency";
 import { calculateTradeMetrics } from "./core/risk/calculateTradeMetrics";
 import { getRiskWarnings } from "./core/risk/getRiskWarnings";
+import { getInstrument } from "./core/instruments/getInstrument";
 
 const COLORS = {
   bgTop: "#050505",
@@ -207,7 +208,8 @@ function fmtNum(n, digits = 2) {
 }
 
 function fmtPrice(n, cfdKey) {
-  return formatPrice(n, getPriceInstrument(cfdKey));
+  const instrument = getInstrument(cfdKey);
+  return formatPrice(n, instrument);
 }
 
 function fmtPct(n) {
