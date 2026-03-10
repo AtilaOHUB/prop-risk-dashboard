@@ -1,6 +1,7 @@
 import { normalizePrice } from "../pricing/normalizePrice";
 import { snapLotToStep } from "../pricing/priceMath";
 import { calculateRiskBox } from "../pricing/riskBox";
+import { calculateTradeMetrics } from "./tradeMetrics";
 import {
   resolveTradeDirection,
   isValidTrade,
@@ -49,7 +50,7 @@ export function updateTradeState(trade, updates) {
   const valid = isValidTrade(entry, stop, takeProfit);
   const riskBox = calculateRiskBox(entry, stop, takeProfit, instrument);
 
-  return {
+  const nextTrade = {
     ...trade,
     entry,
     stop,
@@ -58,5 +59,12 @@ export function updateTradeState(trade, updates) {
     direction,
     valid,
     riskBox,
+  };
+
+  const metrics = calculateTradeMetrics(nextTrade);
+
+  return {
+    ...nextTrade,
+    metrics,
   };
 }
