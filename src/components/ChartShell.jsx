@@ -24,6 +24,8 @@ const INITIAL_TRADE = {
   metrics: { rr: 1.13 },
 };
 
+const HIT_TOLERANCE = 6;
+
 export default function ChartShell({ height = 420 }) {
   const rootRef = useRef(null);
   const chartHostRef = useRef(null);
@@ -33,10 +35,11 @@ export default function ChartShell({ height = 420 }) {
   const [chartApi, setChartApi] = useState(null);
   const [candleSeriesApi, setCandleSeriesApi] = useState(null);
   const [trade, setTrade] = useState(INITIAL_TRADE);
+
   const [mouseProbe, setMouseProbe] = useState({
     y: null,
     price: null,
-    inside: false,
+    hoveredLine: null,
   });
 
   useEffect(() => {
@@ -113,27 +116,41 @@ export default function ChartShell({ height = 420 }) {
     }));
   };
 
+  const detectHoveredLine = (mouseY) => {
+    if (!candleSeriesRef.current) return null;
+
+    const entryY = candleSeriesRef.current.priceToCoordinate(trade.entry);
+    const stopY = candleSeriesRef.current.priceToCoordinate(trade.stop);
+    const tpY = candleSeriesRef.current.priceToCoordinate(trade.takeProfit);
+
+    if (entryY !== null && Math.abs(mouseY - entryY) < HIT_TOLERANCE) {
+      return "entry";
+    }
+
+    if (stopY !== null && Math.abs(mouseY - stopY) < HIT_TOLERANCE) {
+      return "stop";
+    }
+
+    if (tpY !== null && Math.abs(mouseY - tpY) < HIT_TOLERANCE) {
+      return "takeProfit";
+    }
+
+    return null;
+  };
+
   const handleMouseMove = (event) => {
     if (!chartHostRef.current || !candleSeriesRef.current) return;
 
     const rect = chartHostRef.current.getBoundingClientRect();
     const y = event.clientY - rect.top;
 
-    if (y < 0 || y > rect.height) {
-      setMouseProbe({
-        y: null,
-        price: null,
-        inside: false,
-      });
-      return;
-    }
-
     const price = candleSeriesRef.current.coordinateToPrice(y);
+    const hoveredLine = detectHoveredLine(y);
 
     setMouseProbe({
       y,
       price: Number.isFinite(price) ? price : null,
-      inside: true,
+      hoveredLine,
     });
   };
 
@@ -141,7 +158,7 @@ export default function ChartShell({ height = 420 }) {
     setMouseProbe({
       y: null,
       price: null,
-      inside: false,
+      hoveredLine: null,
     });
   };
 
@@ -184,24 +201,17 @@ export default function ChartShell({ height = 420 }) {
           top: 12,
           right: 12,
           padding: "8px 10px",
-          minWidth: "140px",
           fontSize: "12px",
-          lineHeight: 1.4,
-          background: "rgba(17,24,39,0.88)",
-          color: "#ffffff",
+          background: "rgba(17,24,39,0.9)",
           border: "1px solid rgba(255,255,255,0.12)",
           borderRadius: "8px",
-          backdropFilter: "blur(6px)",
+          color: "#fff",
           pointerEvents: "none",
         }}
       >
-        <div>Mouse Y: {mouseProbe.inside ? mouseProbe.y.toFixed(1) : "-"}</div>
-        <div>
-          Price:{" "}
-          {mouseProbe.inside && mouseProbe.price !== null
-            ? mouseProbe.price.toFixed(2)
-            : "-"}
-        </div>
+        <div>Y: {mouseProbe.y?.toFixed?.(1) ?? "-"}</div>
+        <div>Price: {mouseProbe.price?.toFixed?.(2) ?? "-"}</div>
+        <div>Hover: {mouseProbe.hoveredLine ?? "-"}</div>
       </div>
 
       <div
