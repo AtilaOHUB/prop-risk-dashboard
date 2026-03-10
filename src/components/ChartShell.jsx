@@ -15,7 +15,7 @@ const DEMO_DATA = [
   { time: "2025-03-10", open: 2336, high: 2345, low: 2330, close: 2341 },
 ];
 
-const DEMO_TRADE = {
+const INITIAL_TRADE = {
   entry: 2336,
   stop: 2328,
   takeProfit: 2345,
@@ -34,6 +34,7 @@ export default function ChartShell({ height = 420 }) {
 
   const [chartApi, setChartApi] = useState(null);
   const [candleSeriesApi, setCandleSeriesApi] = useState(null);
+  const [trade, setTrade] = useState(INITIAL_TRADE);
 
   useEffect(() => {
     if (!chartHostRef.current) return;
@@ -124,7 +125,7 @@ export default function ChartShell({ height = 420 }) {
       <RiskBoxOverlayCanvas
         chart={chartApi}
         series={candleSeriesApi}
-        trade={DEMO_TRADE}
+        trade={trade}
       />
     </div>
   );
