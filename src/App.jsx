@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import brandLogo from "./assets/capulet-edge-logo.png";
+import ChartShell from "./components/ChartShell";
 import { formatNumber } from "./core/formatting/formatNumber";
 import { formatPrice } from "./core/formatting/formatPrice";
 import { formatCurrency } from "./core/formatting/formatCurrency";
@@ -169,30 +170,28 @@ export default function App() {
   const [useLiveAsEntry, setUseLiveAsEntry] = useState(false);
 
   const preset = PROP_PRESETS[presetKey];
+  const ruleType = getRuleType(preset.ruleType);
+  const instrument = getInstrument(cfdKey);
 
-const ruleType = getRuleType(preset.ruleType);
+  const selectedCfd =
+    cfdKey === "CUSTOM"
+      ? {
+          key: "CUSTOM",
+          label: customCfdName || "Custom CFD",
+          valuePerPoint: Number(customValuePerPoint) || 0,
+          defaultPrice: Number(entry) || 0,
+          group: "Custom CFD",
+        }
+      : {
+          ...getCfdByKey(cfdKey),
+          valuePerPoint: instrument.valuePerPoint,
+        };
 
-const instrument = getInstrument(cfdKey);
-
-const selectedCfd =
-  cfdKey === "CUSTOM"
-    ? {
-        key: "CUSTOM",
-        label: customCfdName || "Custom CFD",
-        valuePerPoint: Number(customValuePerPoint) || 0,
-        defaultPrice: Number(entry) || 0,
-        group: "Custom CFD",
-      }
-    : {
-        ...getCfdByKey(cfdKey),
-        valuePerPoint: instrument.valuePerPoint,
-      };
-
-const tradeInstrument = resolveTradeInstrument({
-  cfdKey,
-  selectedCfd,
-  customValuePerPoint,
-});
+  const tradeInstrument = resolveTradeInstrument({
+    cfdKey,
+    selectedCfd,
+    customValuePerPoint,
+  });
 
   const accountSize = preset.accountSize;
   const dailyLossValue =
@@ -210,8 +209,27 @@ const tradeInstrument = resolveTradeInstrument({
   const profitTargetValue = accountSize * (targetPct / 100);
 
   const metrics = useMemo(() => {
+    const tradeContext = buildTradeContext({
+      cfdKey,
+      selectedCfd,
+      customValuePerPoint,
+      entry,
+      livePrice,
+      useLiveAsEntry,
+      tp,
+      sl,
+      lots,
+      direction,
+      accountSize,
+      riskPercent,
+      leverage,
+      dailyLossValue,
+      maxLossValue,
+      profitTargetValue,
+    });
 
-  const tradeContext = buildTradeContext({
+    return calculateTradeMetrics(tradeContext);
+  }, [
     cfdKey,
     selectedCfd,
     customValuePerPoint,
@@ -228,38 +246,17 @@ const tradeInstrument = resolveTradeInstrument({
     dailyLossValue,
     maxLossValue,
     profitTargetValue,
-  });
-
-  return calculateTradeMetrics(tradeContext);
-
-}, [
-  cfdKey,
-  selectedCfd,
-  customValuePerPoint,
-  entry,
-  livePrice,
-  useLiveAsEntry,
-  tp,
-  sl,
-  lots,
-  direction,
-  accountSize,
-  riskPercent,
-  leverage,
-  dailyLossValue,
-  maxLossValue,
-  profitTargetValue,
-]);
+  ]);
 
   const warnings = getRiskWarnings(
-  buildRiskContext({
-    mode,
-    preset,
-    metrics,
-    dailyLossValue,
-    maxLossValue,
-  })
-);
+    buildRiskContext({
+      mode,
+      preset,
+      metrics,
+      dailyLossValue,
+      maxLossValue,
+    })
+  );
 
   const applySuggestedLots = () => {
     if (metrics.suggestedLots > 0) {
@@ -578,7 +575,13 @@ const tradeInstrument = resolveTradeInstrument({
             >
               <div>
                 <label style={labelStyle()}>Entry</label>
-                <input style={inputStyle()} type="number" step="0.0001" value={entry} onChange={(e) => setEntry(e.target.value)} />
+                <input
+                  style={inputStyle()}
+                  type="number"
+                  step="0.0001"
+                  value={entry}
+                  onChange={(e) => setEntry(e.target.value)}
+                />
               </div>
               <div>
                 <label style={labelStyle()}>Live Price</label>
@@ -593,11 +596,23 @@ const tradeInstrument = resolveTradeInstrument({
               </div>
               <div>
                 <label style={labelStyle()}>Take Profit</label>
-                <input style={inputStyle()} type="number" step="0.0001" value={tp} onChange={(e) => setTp(e.target.value)} />
+                <input
+                  style={inputStyle()}
+                  type="number"
+                  step="0.0001"
+                  value={tp}
+                  onChange={(e) => setTp(e.target.value)}
+                />
               </div>
               <div>
                 <label style={labelStyle()}>Stop Loss</label>
-                <input style={inputStyle()} type="number" step="0.0001" value={sl} onChange={(e) => setSl(e.target.value)} />
+                <input
+                  style={inputStyle()}
+                  type="number"
+                  step="0.0001"
+                  value={sl}
+                  onChange={(e) => setSl(e.target.value)}
+                />
               </div>
             </div>
 
@@ -697,6 +712,11 @@ const tradeInstrument = resolveTradeInstrument({
           </div>
         </div>
 
+        <div style={cardStyle({ marginBottom: 20, padding: 16 })}>
+          <div style={{ fontWeight: 900, marginBottom: 12, fontSize: 18 }}>Chart Layer Test</div>
+          <ChartShell height={420} />
+        </div>
+
         {warnings.length > 0 && (
           <div
             style={cardStyle({
@@ -726,10 +746,30 @@ const tradeInstrument = resolveTradeInstrument({
             marginBottom: 16,
           }}
         >
-          <Stat title="Profit at TP" value={fmtUsd(metrics.profitTp)} subtitle={`TP distance ${fmtPrice(metrics.tpDistance, cfdKey)}`} color={COLORS.green} />
-          <Stat title="Loss at SL" value={fmtUsd(metrics.lossSl)} subtitle={`SL distance ${fmtPrice(metrics.slDistance, cfdKey)}`} color={COLORS.red} />
-          <Stat title="Reward / Risk" value={`${fmtNum(metrics.rr, 2)}x`} subtitle={`Risk ${fmtPct(metrics.slPct)} of account`} color={COLORS.text} />
-          <Stat title="Suggested Lots" value={fmtNum(metrics.suggestedLots, 2)} subtitle={`Target risk ${fmtUsd(metrics.riskAmountTarget)}`} color={COLORS.gold} />
+          <Stat
+            title="Profit at TP"
+            value={fmtUsd(metrics.profitTp)}
+            subtitle={`TP distance ${fmtPrice(metrics.tpDistance, cfdKey)}`}
+            color={COLORS.green}
+          />
+          <Stat
+            title="Loss at SL"
+            value={fmtUsd(metrics.lossSl)}
+            subtitle={`SL distance ${fmtPrice(metrics.slDistance, cfdKey)}`}
+            color={COLORS.red}
+          />
+          <Stat
+            title="Reward / Risk"
+            value={`${fmtNum(metrics.rr, 2)}x`}
+            subtitle={`Risk ${fmtPct(metrics.slPct)} of account`}
+            color={COLORS.text}
+          />
+          <Stat
+            title="Suggested Lots"
+            value={fmtNum(metrics.suggestedLots, 2)}
+            subtitle={`Target risk ${fmtUsd(metrics.riskAmountTarget)}`}
+            color={COLORS.gold}
+          />
         </div>
 
         <div
@@ -816,7 +856,15 @@ const tradeInstrument = resolveTradeInstrument({
             backdropFilter: "blur(10px)",
           }}
         >
-          <div style={{ maxWidth: 1280, margin: "0 auto", display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+          <div
+            style={{
+              maxWidth: 1280,
+              margin: "0 auto",
+              display: "grid",
+              gridTemplateColumns: "1fr 1fr",
+              gap: 10,
+            }}
+          >
             <button style={buttonStyle(true)} onClick={applySuggestedLots}>
               Apply Lots
             </button>
