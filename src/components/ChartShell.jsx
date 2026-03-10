@@ -42,6 +42,12 @@ export default function ChartShell({ height = 420 }) {
     hoveredLine: null,
   });
 
+  const [dragState, setDragState] = useState({
+    active: false,
+    line: null,
+    startPrice: null,
+  });
+
   useEffect(() => {
     if (!chartHostRef.current) return;
 
@@ -121,7 +127,9 @@ export default function ChartShell({ height = 420 }) {
 
     const entryY = candleSeriesRef.current.priceToCoordinate(trade.entry);
     const stopY = candleSeriesRef.current.priceToCoordinate(trade.stop);
-    const tpY = candleSeriesRef.current.priceToCoordinate(trade.takeProfit);
+    const takeProfitY = candleSeriesRef.current.priceToCoordinate(
+      trade.takeProfit
+    );
 
     if (entryY !== null && Math.abs(mouseY - entryY) < HIT_TOLERANCE) {
       return "entry";
@@ -131,7 +139,10 @@ export default function ChartShell({ height = 420 }) {
       return "stop";
     }
 
-    if (tpY !== null && Math.abs(mouseY - tpY) < HIT_TOLERANCE) {
+    if (
+      takeProfitY !== null &&
+      Math.abs(mouseY - takeProfitY) < HIT_TOLERANCE
+    ) {
       return "takeProfit";
     }
 
@@ -143,7 +154,6 @@ export default function ChartShell({ height = 420 }) {
 
     const rect = chartHostRef.current.getBoundingClientRect();
     const y = event.clientY - rect.top;
-
     const price = candleSeriesRef.current.coordinateToPrice(y);
     const hoveredLine = detectHoveredLine(y);
 
@@ -159,6 +169,24 @@ export default function ChartShell({ height = 420 }) {
       y: null,
       price: null,
       hoveredLine: null,
+    });
+  };
+
+  const handleMouseDown = () => {
+    if (!mouseProbe.hoveredLine || mouseProbe.price === null) return;
+
+    setDragState({
+      active: true,
+      line: mouseProbe.hoveredLine,
+      startPrice: mouseProbe.price,
+    });
+  };
+
+  const handleMouseUp = () => {
+    setDragState({
+      active: false,
+      line: null,
+      startPrice: null,
     });
   };
 
@@ -212,12 +240,19 @@ export default function ChartShell({ height = 420 }) {
         <div>Y: {mouseProbe.y?.toFixed?.(1) ?? "-"}</div>
         <div>Price: {mouseProbe.price?.toFixed?.(2) ?? "-"}</div>
         <div>Hover: {mouseProbe.hoveredLine ?? "-"}</div>
+        <div>Drag: {dragState.active ? dragState.line : "-"}</div>
+        <div>
+          Drag Start Price:{" "}
+          {dragState.startPrice?.toFixed?.(2) ?? "-"}
+        </div>
       </div>
 
       <div
         ref={chartHostRef}
         onMouseMove={handleMouseMove}
         onMouseLeave={handleMouseLeave}
+        onMouseDown={handleMouseDown}
+        onMouseUp={handleMouseUp}
         style={{
           position: "absolute",
           inset: 0,
