@@ -1,38 +1,17 @@
 import { useEffect, useRef } from "react";
-import { buildRiskBoxOverlayModel } from "../core/overlay/buildRiskBoxOverlayModel";
-import { drawRiskBoxOverlay } from "../core/overlay/drawRiskBoxOverlay";
 
-export default function RiskBoxOverlayCanvas({
-  trade,
-  width,
-  height,
-  priceToY,
-}) {
+export default function RiskBoxOverlayCanvas({ chart }) {
   const canvasRef = useRef(null);
 
   useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
+    if (!chart) return;
+    if (!canvasRef.current) return;
 
-    canvas.width = width || 0;
-    canvas.height = height || 0;
+    // In diesem Schritt machen wir noch nichts mit dem Chart.
+    // Wir stellen nur sicher, dass das Overlay stabil mountet,
+    // sobald die Chart API verfügbar ist.
 
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return;
-
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-    const model = buildRiskBoxOverlayModel({
-      trade,
-      view: {
-        width: canvas.width,
-        height: canvas.height,
-        priceToY,
-      },
-    });
-
-    drawRiskBoxOverlay(ctx, model);
-  }, [trade, width, height, priceToY]);
+  }, [chart]);
 
   return (
     <canvas
