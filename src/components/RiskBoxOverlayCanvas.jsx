@@ -2,13 +2,14 @@ import { useEffect, useRef } from "react";
 import { buildRiskBoxOverlayModel } from "../core/overlay/buildRiskBoxOverlayModel";
 import { drawRiskBoxOverlay } from "../core/overlay/drawRiskBoxOverlay";
 
+const RIGHT_SCALE_GUTTER = 72;
+
 export default function RiskBoxOverlayCanvas({ series, trade }) {
   const canvasRef = useRef(null);
 
   useEffect(() => {
-    if (!series) return;
-    if (!trade) return;
     if (!canvasRef.current) return;
+    if (!series) return;
 
     const canvas = canvasRef.current;
     const ctx = canvas.getContext("2d");
@@ -32,14 +33,18 @@ export default function RiskBoxOverlayCanvas({ series, trade }) {
       ctx.scale(dpr, dpr);
       ctx.clearRect(0, 0, rect.width, rect.height);
 
+      const drawableWidth = Math.max(0, rect.width - RIGHT_SCALE_GUTTER);
+
       const model = buildRiskBoxOverlayModel({
         trade,
-        priceToY: (price) => series.priceToCoordinate(price),
-        width: rect.width,
-        height: rect.height,
+        view: {
+          width: drawableWidth,
+          height: rect.height,
+          priceToY: (price) => series.priceToCoordinate(price),
+        },
       });
 
-      if (!model) return;
+      if (!model || !model.visible) return;
 
       drawRiskBoxOverlay(ctx, model);
     };
