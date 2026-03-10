@@ -15,6 +15,17 @@ const DEMO_DATA = [
   { time: "2025-03-10", open: 2336, high: 2345, low: 2330, close: 2341 },
 ];
 
+const DEMO_TRADE = {
+  entry: 2336,
+  stop: 2328,
+  takeProfit: 2345,
+  direction: "long",
+  valid: true,
+  metrics: {
+    rr: 1.13,
+  },
+};
+
 export default function ChartShell({ height = 420 }) {
   const rootRef = useRef(null);
   const chartHostRef = useRef(null);
@@ -22,6 +33,7 @@ export default function ChartShell({ height = 420 }) {
   const candleSeriesRef = useRef(null);
 
   const [chartApi, setChartApi] = useState(null);
+  const [candleSeriesApi, setCandleSeriesApi] = useState(null);
 
   useEffect(() => {
     if (!chartHostRef.current) return;
@@ -60,6 +72,7 @@ export default function ChartShell({ height = 420 }) {
     candleSeriesRef.current = candleSeries;
 
     setChartApi(chart);
+    setCandleSeriesApi(candleSeries);
 
     const handleResize = () => {
       if (!rootRef.current || !chartRef.current) return;
@@ -83,6 +96,7 @@ export default function ChartShell({ height = 420 }) {
 
       candleSeriesRef.current = null;
       setChartApi(null);
+      setCandleSeriesApi(null);
     };
   }, [height]);
 
@@ -107,7 +121,11 @@ export default function ChartShell({ height = 420 }) {
         }}
       />
 
-      <RiskBoxOverlayCanvas chart={chartApi} />
+      <RiskBoxOverlayCanvas
+        chart={chartApi}
+        series={candleSeriesApi}
+        trade={DEMO_TRADE}
+      />
     </div>
   );
 }
