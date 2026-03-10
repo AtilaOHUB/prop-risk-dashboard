@@ -113,38 +113,16 @@ export default function ChartShell({ height = 420 }) {
     };
   }, [height]);
 
-  const moveTrade = () => {
-    setTrade((prev) => ({
-      ...prev,
-      entry: prev.entry + 2,
-      stop: prev.stop + 2,
-      takeProfit: prev.takeProfit + 2,
-    }));
-  };
-
   const detectHoveredLine = (mouseY) => {
     if (!candleSeriesRef.current) return null;
 
     const entryY = candleSeriesRef.current.priceToCoordinate(trade.entry);
     const stopY = candleSeriesRef.current.priceToCoordinate(trade.stop);
-    const takeProfitY = candleSeriesRef.current.priceToCoordinate(
-      trade.takeProfit
-    );
+    const tpY = candleSeriesRef.current.priceToCoordinate(trade.takeProfit);
 
-    if (entryY !== null && Math.abs(mouseY - entryY) < HIT_TOLERANCE) {
-      return "entry";
-    }
-
-    if (stopY !== null && Math.abs(mouseY - stopY) < HIT_TOLERANCE) {
-      return "stop";
-    }
-
-    if (
-      takeProfitY !== null &&
-      Math.abs(mouseY - takeProfitY) < HIT_TOLERANCE
-    ) {
-      return "takeProfit";
-    }
+    if (entryY !== null && Math.abs(mouseY - entryY) < HIT_TOLERANCE) return "entry";
+    if (stopY !== null && Math.abs(mouseY - stopY) < HIT_TOLERANCE) return "stop";
+    if (tpY !== null && Math.abs(mouseY - tpY) < HIT_TOLERANCE) return "takeProfit";
 
     return null;
   };
@@ -182,12 +160,35 @@ export default function ChartShell({ height = 420 }) {
     });
   };
 
-  const handleMouseUp = () => {
+  const endDrag = () => {
     setDragState({
       active: false,
       line: null,
       startPrice: null,
     });
+  };
+
+  useEffect(() => {
+    const handleGlobalMouseUp = () => {
+      if (dragState.active) {
+        endDrag();
+      }
+    };
+
+    window.addEventListener("mouseup", handleGlobalMouseUp);
+
+    return () => {
+      window.removeEventListener("mouseup", handleGlobalMouseUp);
+    };
+  }, [dragState.active]);
+
+  const moveTrade = () => {
+    setTrade((prev) => ({
+      ...prev,
+      entry: prev.entry + 2,
+      stop: prev.stop + 2,
+      takeProfit: prev.takeProfit + 2,
+    }));
   };
 
   return (
@@ -241,10 +242,6 @@ export default function ChartShell({ height = 420 }) {
         <div>Price: {mouseProbe.price?.toFixed?.(2) ?? "-"}</div>
         <div>Hover: {mouseProbe.hoveredLine ?? "-"}</div>
         <div>Drag: {dragState.active ? dragState.line : "-"}</div>
-        <div>
-          Drag Start Price:{" "}
-          {dragState.startPrice?.toFixed?.(2) ?? "-"}
-        </div>
       </div>
 
       <div
@@ -252,7 +249,6 @@ export default function ChartShell({ height = 420 }) {
         onMouseMove={handleMouseMove}
         onMouseLeave={handleMouseLeave}
         onMouseDown={handleMouseDown}
-        onMouseUp={handleMouseUp}
         style={{
           position: "absolute",
           inset: 0,
