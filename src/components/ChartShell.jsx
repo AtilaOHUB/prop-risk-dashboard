@@ -21,9 +21,7 @@ const INITIAL_TRADE = {
   takeProfit: 2345,
   direction: "long",
   valid: true,
-  metrics: {
-    rr: 1.13,
-  },
+  metrics: { rr: 1.13 },
 };
 
 export default function ChartShell({ height = 420 }) {
@@ -35,6 +33,11 @@ export default function ChartShell({ height = 420 }) {
   const [chartApi, setChartApi] = useState(null);
   const [candleSeriesApi, setCandleSeriesApi] = useState(null);
   const [trade, setTrade] = useState(INITIAL_TRADE);
+  const [mouseProbe, setMouseProbe] = useState({
+    y: null,
+    price: null,
+    inside: false,
+  });
 
   useEffect(() => {
     if (!chartHostRef.current) return;
@@ -92,14 +95,55 @@ export default function ChartShell({ height = 420 }) {
 
       if (chartRef.current) {
         chartRef.current.remove();
-        chartRef.current = null;
       }
 
+      chartRef.current = null;
       candleSeriesRef.current = null;
       setChartApi(null);
       setCandleSeriesApi(null);
     };
   }, [height]);
+
+  const moveTrade = () => {
+    setTrade((prev) => ({
+      ...prev,
+      entry: prev.entry + 2,
+      stop: prev.stop + 2,
+      takeProfit: prev.takeProfit + 2,
+    }));
+  };
+
+  const handleMouseMove = (event) => {
+    if (!chartHostRef.current || !candleSeriesRef.current) return;
+
+    const rect = chartHostRef.current.getBoundingClientRect();
+    const y = event.clientY - rect.top;
+
+    if (y < 0 || y > rect.height) {
+      setMouseProbe({
+        y: null,
+        price: null,
+        inside: false,
+      });
+      return;
+    }
+
+    const price = candleSeriesRef.current.coordinateToPrice(y);
+
+    setMouseProbe({
+      y,
+      price: Number.isFinite(price) ? price : null,
+      inside: true,
+    });
+  };
+
+  const handleMouseLeave = () => {
+    setMouseProbe({
+      y: null,
+      price: null,
+      inside: false,
+    });
+  };
 
   return (
     <div
@@ -114,8 +158,56 @@ export default function ChartShell({ height = 420 }) {
         overflow: "hidden",
       }}
     >
+      <button
+        onClick={moveTrade}
+        style={{
+          position: "absolute",
+          zIndex: 20,
+          top: 12,
+          left: 12,
+          padding: "6px 10px",
+          fontSize: "12px",
+          background: "#1f2937",
+          color: "#fff",
+          border: "1px solid rgba(255,255,255,0.15)",
+          borderRadius: "6px",
+          cursor: "pointer",
+        }}
+      >
+        Move Trade
+      </button>
+
+      <div
+        style={{
+          position: "absolute",
+          zIndex: 20,
+          top: 12,
+          right: 12,
+          padding: "8px 10px",
+          minWidth: "140px",
+          fontSize: "12px",
+          lineHeight: 1.4,
+          background: "rgba(17,24,39,0.88)",
+          color: "#ffffff",
+          border: "1px solid rgba(255,255,255,0.12)",
+          borderRadius: "8px",
+          backdropFilter: "blur(6px)",
+          pointerEvents: "none",
+        }}
+      >
+        <div>Mouse Y: {mouseProbe.inside ? mouseProbe.y.toFixed(1) : "-"}</div>
+        <div>
+          Price:{" "}
+          {mouseProbe.inside && mouseProbe.price !== null
+            ? mouseProbe.price.toFixed(2)
+            : "-"}
+        </div>
+      </div>
+
       <div
         ref={chartHostRef}
+        onMouseMove={handleMouseMove}
+        onMouseLeave={handleMouseLeave}
         style={{
           position: "absolute",
           inset: 0,
