@@ -1,6 +1,7 @@
 import { useEffect, useRef } from "react";
 import { createChart, CandlestickSeries } from "lightweight-charts";
 import ChartStage from "./ChartStage";
+import RiskBoxOverlayCanvas from "./RiskBoxOverlayCanvas";
 
 const DEMO_CANDLES = [
   { time: "2026-03-01", open: 2938, high: 2946, low: 2931, close: 2942 },
@@ -18,6 +19,7 @@ const DEMO_CANDLES = [
 export default function ChartShell({ height = 420 }) {
   const chartLayerRef = useRef(null);
   const overlayLayerRef = useRef(null);
+
   const chartRef = useRef(null);
   const seriesRef = useRef(null);
 
@@ -41,7 +43,6 @@ export default function ChartShell({ height = 420 }) {
       timeScale: {
         borderColor: "rgba(255,255,255,0.08)",
         timeVisible: true,
-        secondsVisible: false,
       },
       crosshair: {
         mode: 1,
@@ -68,6 +69,7 @@ export default function ChartShell({ height = 420 }) {
       if (!entry) return;
 
       const { width, height: nextHeight } = entry.contentRect;
+
       chart.applyOptions({
         width,
         height: nextHeight,
@@ -78,8 +80,6 @@ export default function ChartShell({ height = 420 }) {
 
     return () => {
       resizeObserver.disconnect();
-      seriesRef.current = null;
-      chartRef.current = null;
       chart.remove();
     };
   }, [height]);
@@ -90,6 +90,8 @@ export default function ChartShell({ height = 420 }) {
       chartLayerRef={chartLayerRef}
       overlayLayerRef={overlayLayerRef}
     >
+      <RiskBoxOverlayCanvas />
+
       <div
         style={{
           position: "absolute",
