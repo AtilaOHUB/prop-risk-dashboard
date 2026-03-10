@@ -1,115 +1,113 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { createChart, CandlestickSeries } from "lightweight-charts";
-import ChartStage from "./ChartStage";
 import RiskBoxOverlayCanvas from "./RiskBoxOverlayCanvas";
 
-const DEMO_CANDLES = [
-  { time: "2026-03-01", open: 2938, high: 2946, low: 2931, close: 2942 },
-  { time: "2026-03-02", open: 2942, high: 2951, low: 2939, close: 2948 },
-  { time: "2026-03-03", open: 2948, high: 2956, low: 2941, close: 2944 },
-  { time: "2026-03-04", open: 2944, high: 2950, low: 2936, close: 2939 },
-  { time: "2026-03-05", open: 2939, high: 2948, low: 2934, close: 2946 },
-  { time: "2026-03-06", open: 2946, high: 2958, low: 2942, close: 2954 },
-  { time: "2026-03-07", open: 2954, high: 2962, low: 2948, close: 2951 },
-  { time: "2026-03-08", open: 2951, high: 2968, low: 2949, close: 2963 },
-  { time: "2026-03-09", open: 2963, high: 2972, low: 2956, close: 2960 },
-  { time: "2026-03-10", open: 2960, high: 2976, low: 2958, close: 2971 },
+const DEMO_DATA = [
+  { time: "2025-03-01", open: 2320, high: 2332, low: 2314, close: 2328 },
+  { time: "2025-03-02", open: 2328, high: 2338, low: 2321, close: 2334 },
+  { time: "2025-03-03", open: 2334, high: 2342, low: 2329, close: 2331 },
+  { time: "2025-03-04", open: 2331, high: 2348, low: 2327, close: 2344 },
+  { time: "2025-03-05", open: 2344, high: 2351, low: 2338, close: 2340 },
+  { time: "2025-03-06", open: 2340, high: 2346, low: 2326, close: 2330 },
+  { time: "2025-03-07", open: 2330, high: 2337, low: 2318, close: 2322 },
+  { time: "2025-03-08", open: 2322, high: 2331, low: 2315, close: 2328 },
+  { time: "2025-03-09", open: 2328, high: 2340, low: 2324, close: 2336 },
+  { time: "2025-03-10", open: 2336, high: 2345, low: 2330, close: 2341 },
 ];
 
 export default function ChartShell({ height = 420 }) {
-  const chartLayerRef = useRef(null);
-  const overlayLayerRef = useRef(null);
-
+  const rootRef = useRef(null);
+  const chartHostRef = useRef(null);
   const chartRef = useRef(null);
-  const seriesRef = useRef(null);
+  const candleSeriesRef = useRef(null);
+
+  const [chartApi, setChartApi] = useState(null);
 
   useEffect(() => {
-    if (!chartLayerRef.current) return;
+    if (!chartHostRef.current) return;
 
-    const chart = createChart(chartLayerRef.current, {
-      width: chartLayerRef.current.clientWidth,
+    const chart = createChart(chartHostRef.current, {
+      width: chartHostRef.current.clientWidth || 800,
       height,
       layout: {
-        background: { color: "transparent" },
-        textColor: "#9CA3AF",
+        background: { color: "#0b0b0f" },
+        textColor: "#d1d5db",
       },
       grid: {
-        vertLines: { color: "rgba(255,255,255,0.05)" },
-        horzLines: { color: "rgba(255,255,255,0.05)" },
+        vertLines: { color: "rgba(255,255,255,0.04)" },
+        horzLines: { color: "rgba(255,255,255,0.04)" },
       },
       rightPriceScale: {
-        borderColor: "rgba(255,255,255,0.08)",
+        borderColor: "rgba(255,255,255,0.12)",
       },
       timeScale: {
-        borderColor: "rgba(255,255,255,0.08)",
-        timeVisible: true,
-      },
-      crosshair: {
-        mode: 1,
+        borderColor: "rgba(255,255,255,0.12)",
       },
     });
 
     const candleSeries = chart.addSeries(CandlestickSeries, {
-      upColor: "#22C55E",
-      downColor: "#EF4444",
-      borderUpColor: "#22C55E",
-      borderDownColor: "#EF4444",
-      wickUpColor: "#22C55E",
-      wickDownColor: "#EF4444",
+      upColor: "#22c55e",
+      downColor: "#ef4444",
+      borderUpColor: "#22c55e",
+      borderDownColor: "#ef4444",
+      wickUpColor: "#22c55e",
+      wickDownColor: "#ef4444",
     });
 
-    candleSeries.setData(DEMO_CANDLES);
-    chart.timeScale().fitContent();
+    candleSeries.setData(DEMO_DATA);
 
     chartRef.current = chart;
-    seriesRef.current = candleSeries;
+    candleSeriesRef.current = candleSeries;
 
-    const resizeObserver = new ResizeObserver((entries) => {
-      const entry = entries[0];
-      if (!entry) return;
+    setChartApi(chart);
 
-      const { width, height: nextHeight } = entry.contentRect;
+    const handleResize = () => {
+      if (!rootRef.current || !chartRef.current) return;
 
-      chart.applyOptions({
-        width,
-        height: nextHeight,
+      chartRef.current.applyOptions({
+        width: rootRef.current.clientWidth || 800,
+        height,
       });
-    });
+    };
 
-    resizeObserver.observe(chartLayerRef.current);
+    window.addEventListener("resize", handleResize);
+    handleResize();
 
     return () => {
-      resizeObserver.disconnect();
-      chart.remove();
+      window.removeEventListener("resize", handleResize);
+
+      if (chartRef.current) {
+        chartRef.current.remove();
+        chartRef.current = null;
+      }
+
+      candleSeriesRef.current = null;
+      setChartApi(null);
     };
   }, [height]);
 
   return (
-    <ChartStage
-      height={height}
-      chartLayerRef={chartLayerRef}
-      overlayLayerRef={overlayLayerRef}
+    <div
+      ref={rootRef}
+      style={{
+        position: "relative",
+        width: "100%",
+        height: `${height}px`,
+        background: "#0b0b0f",
+        border: "1px solid rgba(255,255,255,0.08)",
+        borderRadius: "16px",
+        overflow: "hidden",
+      }}
     >
-      <RiskBoxOverlayCanvas />
-
       <div
+        ref={chartHostRef}
         style={{
           position: "absolute",
-          top: 16,
-          left: 16,
-          zIndex: 3,
-          padding: "6px 10px",
-          fontSize: 12,
-          fontWeight: 700,
-          background: "rgba(245,158,11,0.14)",
-          border: "1px solid rgba(245,158,11,0.35)",
-          borderRadius: 8,
-          color: "#F59E0B",
-          pointerEvents: "none",
+          inset: 0,
         }}
-      >
-        Overlay Layer
-      </div>
-    </ChartStage>
+      />
+
+      <RiskBoxOverlayCanvas chart={chartApi} />
+    </div>
   );
 }
