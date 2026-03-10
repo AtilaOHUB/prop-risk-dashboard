@@ -11,6 +11,7 @@ import { CFD_LIBRARY, getCfdByKey } from "./core/cfd/cfdLibrary";
 import buildTradeContext from "./core/trade/buildTradeContext";
 import { PROP_PRESETS, groupedPresetKeys } from "./core/prop/propPresets";
 import { getRuleType } from "./core/prop/ruleTypes";
+import buildRiskContext from "./core/risk/buildRiskContext";
 
 const COLORS = {
   bgTop: "#050505",
@@ -250,13 +251,15 @@ const tradeInstrument = resolveTradeInstrument({
   profitTargetValue,
 ]);
 
-  const warnings = getRiskWarnings({
+  const warnings = getRiskWarnings(
+  buildRiskContext({
     mode,
-    ruleType: preset.ruleType,
-    riskAbs: metrics.riskAbs,
+    preset,
+    metrics,
     dailyLossValue,
     maxLossValue,
-  });
+  })
+);
 
   const applySuggestedLots = () => {
     if (metrics.suggestedLots > 0) {
