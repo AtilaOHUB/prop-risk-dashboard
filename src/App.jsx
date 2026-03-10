@@ -10,6 +10,7 @@ import resolveTradeInstrument from "./core/instruments/resolveTradeInstrument";
 import { CFD_LIBRARY, getCfdByKey } from "./core/cfd/cfdLibrary";
 import buildTradeContext from "./core/trade/buildTradeContext";
 import { PROP_PRESETS, groupedPresetKeys } from "./core/prop/propPresets";
+import { getRuleType } from "./core/prop/ruleTypes";
 
 const COLORS = {
   bgTop: "#050505",
@@ -167,6 +168,8 @@ export default function App() {
   const [useLiveAsEntry, setUseLiveAsEntry] = useState(false);
 
   const preset = PROP_PRESETS[presetKey];
+
+const ruleType = getRuleType(preset.ruleType);
 
 const instrument = getInstrument(cfdKey);
 
@@ -671,7 +674,7 @@ const tradeInstrument = resolveTradeInstrument({
                 </div>
                 <div style={panelStyle()}>
                   <div style={{ fontSize: 12, color: COLORS.textMuted }}>Rule Type</div>
-                  <div style={{ fontSize: 16, fontWeight: 800, marginTop: 6 }}>{preset.ruleType}</div>
+                  <div style={{ fontSize: 16, fontWeight: 800, marginTop: 6 }}>{ruleType.label}</div>
                 </div>
               </div>
 
