@@ -1,50 +1,57 @@
+import { useMemo } from "react";
+
+const DEFAULT_HEIGHT = 520;
+
 export default function ChartStage({
-  height = 420,
-  children,
-  overlay,
+  height = DEFAULT_HEIGHT,
+  minHeight,
+  className = "",
+  chartLayerRef = null,
+  overlayLayerRef = null,
+  children = null,
 }) {
+  const resolvedMinHeight = useMemo(() => {
+    if (typeof minHeight === "number") {
+      return minHeight;
+    }
+
+    return height;
+  }, [height, minHeight]);
+
   return (
     <div
+      className={className}
       style={{
         position: "relative",
         width: "100%",
         height,
-        borderRadius: 22,
+        minHeight: resolvedMinHeight,
         overflow: "hidden",
-        background: "linear-gradient(180deg, #0B0B0B 0%, #111111 100%)",
-        border: "1px solid #2A2A2A",
-        boxShadow: "inset 0 1px 0 rgba(255,255,255,0.02)",
+        borderRadius: 16,
       }}
     >
       <div
+        ref={chartLayerRef}
+        data-layer="chart"
         style={{
           position: "absolute",
           inset: 0,
-          background:
-            "linear-gradient(to bottom, rgba(255,255,255,0.02) 1px, transparent 1px), linear-gradient(to right, rgba(255,255,255,0.02) 1px, transparent 1px)",
-          backgroundSize: "100% 48px, 72px 100%",
-          pointerEvents: "none",
+          zIndex: 1,
         }}
       />
 
       <div
+        ref={overlayLayerRef}
+        data-layer="overlay"
         style={{
           position: "absolute",
           inset: 0,
-        }}
-      >
-        {children}
-      </div>
-
-      <div
-        style={{
-          position: "absolute",
-          inset: 0,
+          zIndex: 2,
           pointerEvents: "none",
         }}
-      >
-        {overlay}
-      </div>
+      />
+
+      {children}
     </div>
   );
 }
