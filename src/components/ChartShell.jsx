@@ -25,6 +25,111 @@ const INITIAL_TRADE = {
 };
 
 const HIT_TOLERANCE = 6;
+const MIN_PRICE_GAP = 0.01;
+
+function clamp(value, min, max) {
+  return Math.min(Math.max(value, min), max);
+}
+
+function normalizePrice(value) {
+  return Number(value.toFixed(2));
+}
+
+function calculateRr(trade) {
+  if (trade.direction === "short") {
+    const risk = trade.stop - trade.entry;
+    const reward = trade.entry - trade.takeProfit;
+    if (risk <= 0 || reward <= 0) return null;
+    return reward / risk;
+  }
+
+  const risk = trade.entry - trade.stop;
+  const reward = trade.takeProfit - trade.entry;
+  if (risk <= 0 || reward <= 0) return null;
+  return reward / risk;
+}
+
+function buildDraggedTrade(prevTrade, draggedLine, rawPrice) {
+  const nextPrice = normalizePrice(rawPrice);
+
+  if (prevTrade.direction === "short") {
+    let nextEntry = prevTrade.entry;
+    let nextStop = prevTrade.stop;
+    let nextTakeProfit = prevTrade.takeProfit;
+
+    if (draggedLine === "entry") {
+      nextEntry = clamp(
+        nextPrice,
+        nextTakeProfit + MIN_PRICE_GAP,
+        nextStop - MIN_PRICE_GAP
+      );
+    }
+
+    if (draggedLine === "stop") {
+      nextStop = Math.max(nextPrice, prevTrade.entry + MIN_PRICE_GAP);
+    }
+
+    if (draggedLine === "takeProfit") {
+      nextTakeProfit = Math.min(nextPrice, prevTrade.entry - MIN_PRICE_GAP);
+    }
+
+    const nextTrade = {
+      ...prevTrade,
+      entry: normalizePrice(nextEntry),
+      stop: normalizePrice(nextStop),
+      takeProfit: normalizePrice(nextTakeProfit),
+    };
+
+    const rr = calculateRr(nextTrade);
+
+    return {
+      ...nextTrade,
+      valid: Boolean(rr),
+      metrics: {
+        ...prevTrade.metrics,
+        rr: rr ? Number(rr.toFixed(2)) : null,
+      },
+    };
+  }
+
+  let nextEntry = prevTrade.entry;
+  let nextStop = prevTrade.stop;
+  let nextTakeProfit = prevTrade.takeProfit;
+
+  if (draggedLine === "entry") {
+    nextEntry = clamp(
+      nextPrice,
+      prevTrade.stop + MIN_PRICE_GAP,
+      prevTrade.takeProfit - MIN_PRICE_GAP
+    );
+  }
+
+  if (draggedLine === "stop") {
+    nextStop = Math.min(nextPrice, prevTrade.entry - MIN_PRICE_GAP);
+  }
+
+  if (draggedLine === "takeProfit") {
+    nextTakeProfit = Math.max(nextPrice, prevTrade.entry + MIN_PRICE_GAP);
+  }
+
+  const nextTrade = {
+    ...prevTrade,
+    entry: normalizePrice(nextEntry),
+    stop: normalizePrice(nextStop),
+    takeProfit: normalizePrice(nextTakeProfit),
+  };
+
+  const rr = calculateRr(nextTrade);
+
+  return {
+    ...nextTrade,
+    valid: Boolean(rr),
+    metrics: {
+      ...prevTrade.metrics,
+      rr: rr ? Number(rr.toFixed(2)) : null,
+    },
+  };
+}
 
 export default function ChartShell({ height = 420 }) {
   const rootRef = useRef(null);
@@ -45,7 +150,6 @@ export default function ChartShell({ height = 420 }) {
   const [dragState, setDragState] = useState({
     active: false,
     line: null,
-    startPrice: null,
   });
 
   useEffect(() => {
@@ -67,6 +171,17 @@ export default function ChartShell({ height = 420 }) {
       },
       timeScale: {
         borderColor: "rgba(255,255,255,0.12)",
+      },
+      handleScroll: {
+        pressedMouseMove: false,
+        mouseWheel: true,
+        horzTouchDrag: true,
+        vertTouchDrag: true,
+      },
+      handleScale: {
+        mouseWheel: true,
+        pinch: true,
+        axisPressedMouseMove: true,
       },
     });
 
@@ -120,9 +235,17 @@ export default function ChartShell({ height = 420 }) {
     const stopY = candleSeriesRef.current.priceToCoordinate(trade.stop);
     const tpY = candleSeriesRef.current.priceToCoordinate(trade.takeProfit);
 
-    if (entryY !== null && Math.abs(mouseY - entryY) < HIT_TOLERANCE) return "entry";
-    if (stopY !== null && Math.abs(mouseY - stopY) < HIT_TOLERANCE) return "stop";
-    if (tpY !== null && Math.abs(mouseY - tpY) < HIT_TOLERANCE) return "takeProfit";
+    if (entryY !== null && Math.abs(mouseY - entryY) < HIT_TOLERANCE) {
+      return "entry";
+    }
+
+    if (stopY !== null && Math.abs(mouseY - stopY) < HIT_TOLERANCE) {
+      return "stop";
+    }
+
+    if (tpY !== null && Math.abs(mouseY - tpY) < HIT_TOLERANCE) {
+      return "takeProfit";
+    }
 
     return null;
   };
@@ -140,6 +263,10 @@ export default function ChartShell({ height = 420 }) {
       price: Number.isFinite(price) ? price : null,
       hoveredLine,
     });
+
+    if (dragState.active && Number.isFinite(price)) {
+      setTrade((prev) => buildDraggedTrade(prev, dragState.line, price));
+    }
   };
 
   const handleMouseLeave = () => {
@@ -150,13 +277,14 @@ export default function ChartShell({ height = 420 }) {
     });
   };
 
-  const handleMouseDown = () => {
-    if (!mouseProbe.hoveredLine || mouseProbe.price === null) return;
+  const handleMouseDown = (event) => {
+    if (!mouseProbe.hoveredLine) return;
+
+    event.preventDefault();
 
     setDragState({
       active: true,
       line: mouseProbe.hoveredLine,
-      startPrice: mouseProbe.price,
     });
   };
 
@@ -164,7 +292,6 @@ export default function ChartShell({ height = 420 }) {
     setDragState({
       active: false,
       line: null,
-      startPrice: null,
     });
   };
 
@@ -183,12 +310,11 @@ export default function ChartShell({ height = 420 }) {
   }, [dragState.active]);
 
   const moveTrade = () => {
-    setTrade((prev) => ({
-      ...prev,
-      entry: prev.entry + 2,
-      stop: prev.stop + 2,
-      takeProfit: prev.takeProfit + 2,
-    }));
+    setTrade((prev) => buildDraggedTrade(prev, "entry", prev.entry + 2));
+    setTrade((prev) => buildDraggedTrade(prev, "stop", prev.stop + 2));
+    setTrade((prev) =>
+      buildDraggedTrade(prev, "takeProfit", prev.takeProfit + 2)
+    );
   };
 
   return (
@@ -236,12 +362,16 @@ export default function ChartShell({ height = 420 }) {
           borderRadius: "8px",
           color: "#fff",
           pointerEvents: "none",
+          minWidth: "160px",
         }}
       >
-        <div>Y: {mouseProbe.y?.toFixed?.(1) ?? "-"}</div>
-        <div>Price: {mouseProbe.price?.toFixed?.(2) ?? "-"}</div>
         <div>Hover: {mouseProbe.hoveredLine ?? "-"}</div>
         <div>Drag: {dragState.active ? dragState.line : "-"}</div>
+        <div>Entry: {trade.entry.toFixed(2)}</div>
+        <div>Stop: {trade.stop.toFixed(2)}</div>
+        <div>TP: {trade.takeProfit.toFixed(2)}</div>
+        <div>RR: {trade.metrics?.rr ?? "-"}</div>
+        <div>Valid: {trade.valid ? "true" : "false"}</div>
       </div>
 
       <div
@@ -252,6 +382,7 @@ export default function ChartShell({ height = 420 }) {
         style={{
           position: "absolute",
           inset: 0,
+          cursor: mouseProbe.hoveredLine || dragState.active ? "ns-resize" : "default",
         }}
       />
 
